@@ -248,10 +248,10 @@ export function DemoWorkbench() {
   return (
     <main className="demo-shell">
       <header className="demo-topbar">
-        <Link href="/www" className="demo-brand"><span><Sparkle size={17} weight="fill" /></span>策划台</Link>
+        <Link href="/" className="demo-brand"><span><Sparkle size={17} weight="fill" /></span>策划台</Link>
         <span className="demo-topbar-label">{!modelReady ? '正在检测模型' : aiMode === 'demo' ? '演示模式' : aiMode === 'server' ? '本机 DeepSeek' : '我的 DeepSeek'}</span>
         <button type="button" className="demo-settings-trigger" onClick={openSettings}><GearSix size={17} />模型设置</button>
-        <Link href="/www" className="demo-home-link">返回首页</Link>
+        <Link href="/" className="demo-home-link">返回首页</Link>
       </header>
 
       <div className="demo-heading">

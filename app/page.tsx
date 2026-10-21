@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import { Portal } from '../components/Portal'
 
 export default function Home() {
-  redirect('/www')
+  return <Portal view="home" />
 }
