@@ -1,13 +1,15 @@
 # AI 营销方案工作台
 
-## 立即体验
+## 在自己的电脑上运行
 
 ```bash
+git clone https://github.com/yyj0627/ai-marketing-workbench.git
+cd ai-marketing-workbench
 npm install
 npm run dev
 ```
 
-打开 `http://localhost:3000/demo`。无需账号或 API Key，可体验需求录入、按“前期分析／主体创意／预算分配”组织的十模块方案初稿、逐模块编辑与修改建议、浏览器保存，以及 Word、PPT 导出。默认方案和修改建议由规则生成，页面会明确标记“规则演示”；不会冒充模型输出。
+在运行上述命令的那台电脑上打开 `http://localhost:3000/demo`；`localhost` 始终指访问者自己的电脑，这不是公开网站地址。无需账号或 API Key，可体验需求录入、按“前期分析／主体创意／预算分配”组织的十模块方案初稿、逐模块编辑与修改建议、浏览器保存，以及 Word、PPT 导出。默认方案和修改建议由规则生成，页面会明确标记“规则演示”；不会冒充模型输出。
 
 ## 使用 DeepSeek
 
@@ -29,7 +31,7 @@ AI_API_KEY=你的 DeepSeek API Key
 
 ## 分享项目
 
-GitHub 仓库用于分享源代码，本身不会运行 Next.js 网站。其他人可以克隆仓库、运行 `npm install` 和 `npm run dev`，然后打开本机的 `/demo`。如果要让别人直接通过网页试用，还需要部署到支持 Next.js 服务端接口的平台；部署时不需要填写你的 DeepSeek Key。
+GitHub 仓库用于分享源代码，本身不会运行 Next.js 网站。现在其他人只能按上面的步骤把项目下载到自己的电脑，运行后访问自己电脑的 `localhost:3000/demo`。如果要让别人直接点开一个公开网址试用，还需要把项目部署到支持 Next.js 服务端接口的平台；部署时不需要填写你的 DeepSeek Key。
 
 `.env.local` 已被 Git 忽略，只有不含真实密钥的 `.env.local.example` 会上传。请勿把真实 Key 写入源代码、截图或部署平台的公开环境变量。
 
