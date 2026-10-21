@@ -1,0 +1,3 @@
+.form-actions--rich .form-action-notice--saving { color: var(--muted); }
+.form-actions--rich .form-action-notice--success { color: var(--accent); }
+.form-actions--rich .form-action-notice--error { color: var(--alert); }
