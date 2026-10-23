@@ -2,6 +2,10 @@ export type PlanTextBlock = { type: 'heading' | 'paragraph' | 'list'; text: stri
 
 const EVIDENCE_LABEL = /^(?:已知事实|事实|推断|推断\/策略假设|策略假设|假设|待核实|待验证|需验证|用户提供，尚未核验)$/u
 
+export function readableSourceMarkers(content: string): string {
+  return content.replace(/[ \t]*[（(]\s*S\d+(?:\s*[,，、;；]\s*S\d+)*\s*[）)]/giu, '（见本节参考资料）')
+}
+
 function separateHeadings(content: string): string {
   return content.replace(/【([^】\n]{1,50})】/gu, (token, label: string, offset: number, source: string) => {
     const lineStart = source.lastIndexOf('\n', offset - 1) + 1
@@ -69,7 +73,7 @@ function splitAtSemicolons(text: string): string[] {
 }
 
 export function parsePlanContent(content: string): PlanTextBlock[] {
-  const normalized = separateHeadings(content.replace(/\r\n?/g, '\n'))
+  const normalized = separateHeadings(readableSourceMarkers(content.replace(/\r\n?/g, '\n')))
   const blocks: PlanTextBlock[] = []
   for (const originalLine of normalized.split('\n')) {
     const line = originalLine.trim()

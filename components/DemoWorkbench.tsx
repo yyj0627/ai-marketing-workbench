@@ -15,13 +15,15 @@ import {
   X,
 } from '@phosphor-icons/react'
 import {
+  buildDemoPlan,
+  emptyBrief,
   exampleBrief,
   isLegacyPlan,
   planGroupTitle,
   type DemoBrief,
   type DemoPlan,
 } from '@/lib/demo-planner'
-import { parsePlanContent } from '@/lib/plan-format'
+import { parsePlanContent, readableSourceMarkers } from '@/lib/plan-format'
 
 const storageKey = 'marketing-workbench-demo-v1'
 const modelStorageKey = 'marketing-workbench-deepseek-session-v1'
@@ -31,7 +33,7 @@ type AiMode = 'demo' | 'server' | 'personal'
 type DeepSeekModel = 'deepseek-flash' | 'deepseek-v4-pro'
 
 export function DemoWorkbench() {
-  const [brief, setBrief] = useState<DemoBrief>(exampleBrief)
+  const [brief, setBrief] = useState<DemoBrief>(emptyBrief)
   const [plan, setPlan] = useState<DemoPlan | null>(null)
   const [selected, setSelected] = useState('brief')
   const [editingSection, setEditingSection] = useState(false)
@@ -62,12 +64,23 @@ export function DemoWorkbench() {
       if (!saved) return
       const parsed = JSON.parse(saved) as StoredDraft
       if (parsed.brief && typeof parsed.brief.projectName === 'string') {
-        setBrief({ ...exampleBrief, ...parsed.brief, knownFacts: '', evidenceSources: '', attachments: parsed.brief.attachments || [] })
+        const exampleFields = ['projectName', 'product', 'audience', 'goal', 'budget', 'channels', 'marketContext', 'competitors'] as const
+        const isExample = exampleFields.every(key => parsed.brief[key] === exampleBrief[key]) && !parsed.brief.attachments?.length
+        const untouchedDemo = !parsed.plan || (parsed.plan.mode === 'demo' && Array.isArray(parsed.plan.sections)
+          && JSON.stringify(parsed.plan.sections) === JSON.stringify(buildDemoPlan(exampleBrief).sections))
+        if (isExample && untouchedDemo) {
+          localStorage.removeItem(storageKey)
+          return
+        }
+        setBrief({ ...emptyBrief, ...parsed.brief, knownFacts: '', evidenceSources: '', attachments: Array.isArray(parsed.brief.attachments) ? parsed.brief.attachments : [] })
       }
-      if (parsed.plan && Array.isArray(parsed.plan.sections)) setPlan(parsed.plan)
+      if (parsed.plan && Array.isArray(parsed.plan.sections)) setPlan({
+        ...parsed.plan,
+        sections: parsed.plan.sections.map(section => ({ ...section, content: readableSourceMarkers(section.content) })),
+      })
       setNotice('上次保存的方案已经打开。')
     } catch {
-      // A damaged local draft must not prevent the example from opening.
+      // A damaged local draft must not prevent a blank project from opening.
     }
   }, [])
 
@@ -224,7 +237,7 @@ export function DemoWorkbench() {
           ? '初稿出来了。先核对事实，再挑需要修改的部分。'
           : '演示初稿出来了。它展示工作流程，不代表真实市场结论。')
       } else if (action === 'revise' && result.suggestion) {
-        setSuggestion(result.suggestion)
+        setSuggestion(readableSourceMarkers(result.suggestion))
         setSuggestionMode(result.mode || 'demo')
       } else {
         throw new Error('没有拿到可用内容，再试一次吧。')
@@ -322,7 +335,7 @@ export function DemoWorkbench() {
         <section className="demo-panel demo-brief">
           <div className="demo-panel-head">
             <span className="demo-step">01</span>
-            <div><h2>先说说你的项目</h2><p>下面放了一个例子。按你的项目改，没把握的先留空。</p></div>
+            <div><h2>你的项目</h2></div>
           </div>
           <div className="demo-upload">
             <div className="demo-upload-heading"><Paperclip size={18} /><strong>上传附件</strong><span>选填</span></div>
@@ -347,22 +360,22 @@ export function DemoWorkbench() {
               <textarea value={brief.product} onChange={event => change('product', event.target.value)} />
             </label>
             <label>目标人群
-              <textarea value={brief.audience} onChange={event => change('audience', event.target.value)} placeholder="还不确定的话，可以先留空" />
+              <textarea value={brief.audience} onChange={event => change('audience', event.target.value)} placeholder="描述你希望触达的人群；未确定可留空" />
             </label>
             <label>市场、地区与营销节点
-              <textarea value={brief.marketContext || ''} onChange={event => change('marketContext', event.target.value)} placeholder="比如：面向上海的夏季新品上市；没有确定节点也可以留空" />
+              <textarea value={brief.marketContext || ''} onChange={event => change('marketContext', event.target.value)} placeholder="填写市场、地区和营销节点；未确定可留空" />
             </label>
             <label>主要竞品或替代选择
-              <textarea value={brief.competitors || ''} onChange={event => change('competitors', event.target.value)} placeholder="写品牌、品类或用户现在的替代做法；不了解就留空" />
+              <textarea value={brief.competitors || ''} onChange={event => change('competitors', event.target.value)} placeholder="填写已知品牌、品类或替代做法；不了解可留空" />
             </label>
             <label><span>目标 <strong>*</strong></span>
               <textarea value={brief.goal} onChange={event => change('goal', event.target.value)} />
             </label>
             <label>预算和时间
-              <input value={brief.budget} onChange={event => change('budget', event.target.value)} placeholder="比如：5000 元，4 周" />
+              <input value={brief.budget} onChange={event => change('budget', event.target.value)} placeholder="填写预算与周期；未确定可留空" />
             </label>
             <label>渠道
-              <input value={brief.channels} onChange={event => change('channels', event.target.value)} placeholder="比如：小红书、社群" />
+              <input value={brief.channels} onChange={event => change('channels', event.target.value)} placeholder="填写计划使用的渠道；未确定可留空" />
             </label>
           </div>
           <button
@@ -386,7 +399,7 @@ export function DemoWorkbench() {
             <div className="demo-empty">
               <span><MagicWand size={27} /></span>
               <h3>初稿会出现在这里</h3>
-              <p>左边已经放好一个例子。点“生成初稿”看看，也可以先换成自己的项目。</p>
+              <p>在左侧填写项目名称、推广内容和目标，初稿就会出现在这里。</p>
             </div>
           ) : (
             <>
@@ -420,14 +433,14 @@ export function DemoWorkbench() {
                     /> : <PlanReadableContent content={current?.content || ''} />}
                   {current && plan.mode === 'ai' && (
                     <div className="demo-references">
-                      <h4>参考资料</h4>
+                      <h4>本节参考资料</h4>
                       {current.references?.length ? <ol>
                         {current.references.map(reference => <li key={reference.url}>
                           <a href={reference.url} target="_blank" rel="noopener noreferrer">{reference.title} <span aria-hidden="true">↗</span></a>
                           <small>{[reference.siteName, reference.publishedAt].filter(Boolean).join(' · ')}</small>
                         </li>)}
                       </ol> : <p>本节没有可直接引用的网页资料；具体判断请按待核实处理。</p>}
-                      <p className="demo-references-note">打开原文核对发布时间和适用范围。修改正文后，也请检查资料是否仍支持对应判断。</p>
+                      <p className="demo-references-note">点击标题可打开原网页，核对发布时间、案例细节和适用范围。修改正文后，也请检查资料是否仍支持对应判断。</p>
                     </div>
                   )}
                   <div className="demo-revise">

@@ -33,6 +33,18 @@ export type DemoPlan = {
   createdAt: string
 }
 
+export const emptyBrief: DemoBrief = {
+  projectName: '',
+  product: '',
+  audience: '',
+  goal: '',
+  budget: '',
+  channels: '',
+  marketContext: '',
+  competitors: '',
+  attachments: [],
+}
+
 export const exampleBrief: DemoBrief = {
   projectName: '轻醒咖啡｜办公室午后场景验证',
   product: '低糖冷萃咖啡，面向办公室场景，提供单瓶购买与团队拼单。',

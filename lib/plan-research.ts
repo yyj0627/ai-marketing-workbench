@@ -45,6 +45,13 @@ export function buildResearchQueries(brief: DemoBrief): ResearchQuery[] {
   return queries.map(item => ({ ...item, query: withExclusions(item.query) }))
 }
 
+export function buildCompetitorCaseQuery(brief: DemoBrief): ResearchQuery {
+  const product = terms(brief.product.split(/[，,。；;！!？?\n]/u)[0], 24)
+  const market = terms(brief.marketContext?.split(/[，,。；;]/u)[0], 18)
+  const years = `${new Date().getUTCFullYear() - 1} ${new Date().getUTCFullYear()}`
+  return { topic: 'competitor', query: withExclusions(`${market} ${product} 同品类 替代品牌 创意营销活动 案例 联名 内容传播 ${years}`) }
+}
+
 export function normalizePlannedQueries(value: unknown, fallback: ResearchQuery[]): ResearchQuery[] {
   if (!Array.isArray(value)) return fallback
   const queries = topics.map(topic => {
@@ -103,7 +110,7 @@ export function collectResearchSources(groups: Array<{ topic: ResearchTopic; res
   return sources
 }
 
-export function referencesForIds(ids: unknown, sources: ResearchSource[]): PlanReference[] {
+export function referencesForIds(ids: unknown, sources: ResearchSource[], limit = 3): PlanReference[] {
   if (!Array.isArray(ids)) return []
   const unique = new Set<string>()
   return ids.flatMap(item => {
@@ -117,5 +124,5 @@ export function referencesForIds(ids: unknown, sources: ResearchSource[]): PlanR
       ...(source.siteName ? { siteName: source.siteName } : {}),
       ...(source.publishedAt ? { publishedAt: source.publishedAt } : {}),
     }]
-  }).slice(0, 3)
+  }).slice(0, Math.min(Math.max(limit, 0), 8))
 }
