@@ -15,6 +15,14 @@ export type PlanSection = {
   id: string
   title: string
   content: string
+  references?: PlanReference[]
+}
+
+export type PlanReference = {
+  title: string
+  url: string
+  siteName?: string
+  publishedAt?: string
 }
 
 export type DemoPlan = {

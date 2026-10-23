@@ -319,7 +319,7 @@ export function DemoWorkbench() {
           >
             <MagicWand size={18} />{!modelReady ? '正在连接模型…' : busy === 'generate' ? '正在撰写完整提案…' : plan ? '重新生成初稿' : '生成初稿'}<ArrowRight size={17} />
           </button>
-          <p className="demo-privacy">{busy === 'generate' && aiMode !== 'demo' ? '正在依次完成前期分析、主体创意和预算分配，请稍等。' : '点击保存后，方案只留在这个浏览器。这里不会自动核实资料。'}{aiMode !== 'demo' ? '生成时，项目内容会发给 DeepSeek。' : '演示模式不会调用模型。'}下载 Word 或 PPT 时，内容会由本站服务端生成文件，不会保存副本。</p>
+          <p className="demo-privacy">{busy === 'generate' && aiMode !== 'demo' ? '正在联网查找资料，并依次完成前期分析、主体创意和预算分配，请稍等。' : '点击保存后，方案只留在这个浏览器。'}{aiMode !== 'demo' ? 'AI 模式会用你的 DeepSeek Key 检索网页并生成方案；参考链接可打开核对，结论仍需你判断。' : '演示模式不会联网或调用模型。'}下载 Word 或 PPT 时，内容会由本站服务端生成文件，不会保存副本。</p>
         </section>
 
         <section className="demo-panel demo-output">
@@ -364,6 +364,18 @@ export function DemoWorkbench() {
                       value={current?.content || ''}
                       onChange={event => editSection(event.target.value)}
                     /> : <PlanReadableContent content={current?.content || ''} />}
+                  {current && plan.mode === 'ai' && (
+                    <div className="demo-references">
+                      <h4>参考资料</h4>
+                      {current.references?.length ? <ol>
+                        {current.references.map(reference => <li key={reference.url}>
+                          <a href={reference.url} target="_blank" rel="noopener noreferrer">{reference.title} <span aria-hidden="true">↗</span></a>
+                          <small>{[reference.siteName, reference.publishedAt].filter(Boolean).join(' · ')}</small>
+                        </li>)}
+                      </ol> : <p>本节没有可直接引用的网页资料；具体判断请按待核实处理。</p>}
+                      <p className="demo-references-note">打开原文核对发布时间和适用范围。修改正文后，也请检查资料是否仍支持对应判断。</p>
+                    </div>
+                  )}
                   <div className="demo-revise">
                     <label>想怎么改？
                       <input value={instruction} onChange={event => setInstruction(event.target.value)} placeholder="比如：把低预算执行动作写具体一点" />
@@ -424,7 +436,7 @@ export function DemoWorkbench() {
                 <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
               </select>
             </label>
-            <p>Key 只保存在当前浏览器标签页，不会写进方案或下载文件。关闭标签页后需要重新填写；生成时会通过本站服务端发送给 DeepSeek，费用由提供 Key 的账户承担。</p>
+            <p>Key 只保存在当前浏览器标签页，不会写进方案或下载文件。关闭标签页后需要重新填写；生成时会通过本站服务端调用 DeepSeek 的搜索和模型接口，费用由提供 Key 的账户承担。</p>
           </div>}
           {settingsError && <p className="demo-settings-error" role="alert">{settingsError}</p>}
           <div className="demo-settings-actions"><button type="button" className="button button--outline" onClick={closeSettings}>取消</button><button type="button" className="button button--primary" onClick={saveSettings}>保存设置</button></div>

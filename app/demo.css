@@ -52,6 +52,15 @@
 .demo-reader--compact{min-height:0;padding:8px 0 0;font-size:13px;line-height:1.8}
 .demo-reader--compact h4{margin-top:18px;font-size:13px}
 .demo-section-body>textarea{display:block;min-height:520px;resize:vertical;line-height:1.8;font-size:14px}
+.demo-references{margin:18px 0 0;padding:17px 18px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
+.demo-references h4{margin:0 0 9px;font-size:13px;color:var(--ink)}
+.demo-references ol{display:grid;gap:10px;margin:0;padding-left:21px}
+.demo-references li{padding-left:2px;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.demo-references a{color:var(--accent);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.demo-references a:hover{color:var(--ink)}
+.demo-references small{display:block;margin-top:2px;color:var(--muted);font-size:11px}
+.demo-references p{margin:0;color:var(--muted);font-size:12px;line-height:1.6}
+.demo-references .demo-references-note{margin-top:11px;font-size:11px}
 .demo-revise{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:9px;margin-top:22px;padding-top:20px;border-top:1px solid var(--line)}
 .demo-revise .button{min-height:39px}
 .demo-suggestion{margin-top:17px;border:1px solid #b8d4c1;border-radius:10px;background:var(--soft);padding:16px}

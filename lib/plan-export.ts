@@ -1,7 +1,8 @@
-import { Document, HeadingLevel, Packer, Paragraph, TextRun } from 'docx'
+import { Document, ExternalHyperlink, HeadingLevel, Packer, Paragraph, TextRun } from 'docx'
 import PptxGenJS from 'pptxgenjs'
 import { planGroupTitle, validateBrief, type DemoBrief, type DemoPlan } from './demo-planner.ts'
 import { parsePlanContent, type PlanTextBlock } from './plan-format.ts'
+import { publicWebUrl } from './plan-research.ts'
 
 const INK = '203128'
 const ACCENT = '28704B'
@@ -26,7 +27,16 @@ export function validateExportPayload(value: unknown): value is ExportPayload {
   return plan.sections.every(section => section && typeof section === 'object'
     && typeof section.id === 'string' && section.id.length <= 80
     && typeof section.title === 'string' && section.title.length <= 120
-    && typeof section.content === 'string' && section.content.length <= 20_000)
+    && typeof section.content === 'string' && section.content.length <= 20_000
+    && (section.references === undefined || (Array.isArray(section.references) && section.references.length <= 8
+      && section.references.every((reference: unknown) => {
+        if (!reference || typeof reference !== 'object') return false
+        const value = reference as Record<string, unknown>
+        return typeof value.title === 'string' && value.title.length > 0 && value.title.length <= 180
+          && typeof value.url === 'string' && Boolean(publicWebUrl(value.url))
+          && (value.siteName === undefined || (typeof value.siteName === 'string' && value.siteName.length <= 80))
+          && (value.publishedAt === undefined || (typeof value.publishedAt === 'string' && value.publishedAt.length <= 30))
+      }))))
 }
 
 function sources(brief: DemoBrief): string[] {
@@ -63,6 +73,19 @@ export async function createWordBuffer(brief: DemoBrief, plan: DemoPlan): Promis
         paragraphs.push(new Paragraph({ text: block.text, bullet: { level: 0 }, spacing: { after: 90, line: 330 } }))
       } else {
         paragraphs.push(new Paragraph({ text: block.text, spacing: { after: 150, line: 360 }, widowControl: true }))
+      }
+    }
+    if (section.references?.length) {
+      paragraphs.push(new Paragraph({ text: '参考资料', heading: HeadingLevel.HEADING_3, keepNext: true }))
+      for (const reference of section.references) {
+        paragraphs.push(new Paragraph({
+          children: [new ExternalHyperlink({
+            children: [new TextRun({ text: reference.title, color: ACCENT, underline: {} })],
+            link: reference.url,
+          }), new TextRun({ text: `  ${[reference.siteName, reference.publishedAt].filter(Boolean).join(' · ')}`, color: MUTED, size: 18 })],
+          bullet: { level: 0 },
+          spacing: { after: 100 },
+        }))
       }
     }
   }
@@ -211,6 +234,23 @@ export async function createPresentationBuffer(brief: DemoBrief, plan: DemoPlan)
         x: 0.94, y: 1.98, w: 11.36, h: 4.72,
         fontFace: FONT, fontSize: 18, color: INK, margin: 0, valign: 'top',
         fit: 'shrink', lang: 'zh-CN', lineSpacingMultiple: 1.18,
+      })
+    }
+    if (section.references?.length) {
+      const slide = pptx.addSlide()
+      slideNumber += 1
+      addSlideHeader(slide, pptx, group, `${section.title} · 参考资料`, slideNumber)
+      section.references.forEach((reference, index) => {
+        const y = 1.95 + index * 0.83
+        slide.addText(`${index + 1}. ${reference.title} ↗`, {
+          x: 0.94, y, w: 11.4, h: 0.35, fontFace: FONT, fontSize: 16,
+          color: ACCENT, bold: true, margin: 0, fit: 'shrink', lang: 'zh-CN',
+          hyperlink: { url: reference.url },
+        })
+        slide.addText([reference.siteName, reference.publishedAt].filter(Boolean).join(' · '), {
+          x: 1.24, y: y + 0.36, w: 10.8, h: 0.24, fontFace: FONT, fontSize: 10,
+          color: MUTED, margin: 0, lang: 'zh-CN',
+        })
       })
     }
   }
