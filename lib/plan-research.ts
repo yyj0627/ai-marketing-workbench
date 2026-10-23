@@ -29,34 +29,58 @@ function withExclusions(query: string) {
   return `${clean.slice(0, 127 - exclusions.length)} ${exclusions}`
 }
 
-export function buildResearchQueries(brief: DemoBrief): ResearchQuery[] {
+export function inferOwnBrand(brief: DemoBrief): string {
+  const prefix = brief.projectName.split(/[｜|：:—–]/u)[0].trim()
+  if (prefix !== brief.projectName.trim() && prefix.length >= 2 && prefix.length <= 16) return prefix
+  const product = brief.product.trim()
+  let shared = ''
+  for (const character of brief.projectName.trim()) {
+    if (product[shared.length] !== character || shared.length >= 16) break
+    shared += character
+  }
+  return shared.length >= 2 ? shared : ''
+}
+
+type ResearchIdentity = { ownBrand?: string; category?: string }
+
+function competitorCategory(brief: DemoBrief, identity: ResearchIdentity = {}) {
+  const ownBrand = terms(identity.ownBrand || inferOwnBrand(brief), 30)
+  const category = terms(identity.category || brief.product.split(/[，,。；;！!？?\n]/u)[0], 36)
+  return terms(ownBrand ? category.replaceAll(ownBrand, ' ') : category, 24) || '同品类产品'
+}
+
+export function buildResearchQueries(brief: DemoBrief, identity: ResearchIdentity = {}): ResearchQuery[] {
   const product = terms(brief.product.split(/[，,。；;！!？?\n]/u)[0], 24)
+  const ownBrand = terms(identity.ownBrand || inferOwnBrand(brief), 30)
+  const category = competitorCategory(brief, identity)
   const market = terms(brief.marketContext?.split(/[，,。；;]/u)[0].split(/办公室|日常|场景|人群|用户/u)[0], 24)
   const audience = terms(brief.audience, 40)
-  const competitors = terms(brief.competitors, 36)
+  const competitors = terms(brief.competitors?.replaceAll(ownBrand || '\u0000', ' '), 36)
   const channels = terms(brief.channels, 18)
   const years = `${new Date().getUTCFullYear() - 1} ${new Date().getUTCFullYear()}`
   const queries: ResearchQuery[] = [
     { topic: 'environment', query: `${market} ${product} 市场报告 行业趋势 统计 官方 ${years}` },
     { topic: 'consumer', query: `${market} ${product} ${audience} 消费者行为 调研报告 ${years}` },
-    { topic: 'competitor', query: `${competitors || product} 品牌营销活动 具体案例 ${channels} ${years}` },
+    { topic: 'competitor', query: `${category} ${competitors} 其他品牌 营销活动 具体案例 ${channels} ${years}` },
     { topic: 'channel', query: `${product} ${channels} 品牌营销活动 案例 官方 ${years}` },
   ]
   return queries.map(item => ({ ...item, query: withExclusions(item.query) }))
 }
 
-export function buildCompetitorCaseQuery(brief: DemoBrief): ResearchQuery {
-  const product = terms(brief.product.split(/[，,。；;！!？?\n]/u)[0], 24)
+export function buildCompetitorCaseQuery(brief: DemoBrief, identity: ResearchIdentity = {}): ResearchQuery {
+  const category = competitorCategory(brief, identity)
   const market = terms(brief.marketContext?.split(/[，,。；;]/u)[0], 18)
   const years = `${new Date().getUTCFullYear() - 1} ${new Date().getUTCFullYear()}`
-  return { topic: 'competitor', query: withExclusions(`${market} ${product} 同品类 替代品牌 创意营销活动 案例 联名 内容传播 ${years}`) }
+  return { topic: 'competitor', query: withExclusions(`${market} ${category} 其他品牌 替代品牌 创意营销活动 案例 联名 内容传播 ${years}`) }
 }
 
-export function normalizePlannedQueries(value: unknown, fallback: ResearchQuery[]): ResearchQuery[] {
+export function normalizePlannedQueries(value: unknown, fallback: ResearchQuery[], ownBrand = ''): ResearchQuery[] {
   if (!Array.isArray(value)) return fallback
   const queries = topics.map(topic => {
     const found = value.find(item => item && typeof item === 'object' && item.topic === topic)
     const query = found && typeof found.query === 'string' ? found.query.replace(/-site:(?:smzdm\.com|taobao\.com)/gu, '').trim() : ''
+    const fallbackQuery = fallback.find(item => item.topic === topic)
+    if (topic === 'competitor' && ownBrand && query.includes(ownBrand)) return fallbackQuery || null
     return query.length >= 4 ? { topic, query: withExclusions(query) } : null
   })
   return queries.every(Boolean) ? queries as ResearchQuery[] : fallback
@@ -76,7 +100,7 @@ export function publicWebUrl(value: unknown): string | null {
   }
 }
 
-export function collectResearchSources(groups: Array<{ topic: ResearchTopic; results: SearchResult[] }>): ResearchSource[] {
+export function collectResearchSources(groups: Array<{ topic: ResearchTopic; results: SearchResult[] }>, ownBrand = ''): ResearchSource[] {
   const sources: ResearchSource[] = []
   const seen = new Set<string>()
   const limits: Record<ResearchTopic, number> = { environment: 2, consumer: 2, competitor: 3, channel: 2 }
@@ -89,6 +113,7 @@ export function collectResearchSources(groups: Array<{ topic: ResearchTopic; res
       if (!url || seen.has(url) || content.length < 100) continue
       if (/(?:^|\.)(?:smzdm\.com|taobao\.com|dealmoon\.cn|renrendoc\.com|book118\.com)$/u.test(new URL(url).hostname)) continue
       const title = typeof result.title === 'string' ? result.title.trim().slice(0, 180) : ''
+      if (group.topic === 'competitor' && ownBrand && title.includes(ownBrand)) continue
       const summary = typeof result.summary === 'string' ? result.summary.trim().slice(0, 700) : ''
       if (!title) continue
       const siteName = typeof result.site_name === 'string' ? result.site_name.trim().slice(0, 80) : ''
@@ -108,6 +133,11 @@ export function collectResearchSources(groups: Array<{ topic: ResearchTopic; res
     }
   }
   return sources
+}
+
+export function selfBrandCaseInContent(content: string, ownBrand: string): boolean {
+  if (!ownBrand) return false
+  return (content.match(/【案例[^】]*】/gu) || []).some(heading => heading.includes(ownBrand))
 }
 
 export function referencesForIds(ids: unknown, sources: ResearchSource[], limit = 3): PlanReference[] {
