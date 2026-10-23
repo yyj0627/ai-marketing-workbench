@@ -51,6 +51,23 @@ function splitLongParagraph(text: string): string[] {
   return paragraphs
 }
 
+function splitAtSemicolons(text: string): string[] {
+  const parts: string[] = []
+  let start = 0
+  let depth = 0
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index]
+    if (character === '（' || character === '(') depth += 1
+    if (character === '）' || character === ')') depth = Math.max(0, depth - 1)
+    if ((character === '；' || character === ';') && depth === 0) {
+      parts.push(text.slice(start, index + 1))
+      start = index + 1
+    }
+  }
+  if (start < text.length) parts.push(text.slice(start))
+  return parts
+}
+
 export function parsePlanContent(content: string): PlanTextBlock[] {
   const normalized = separateHeadings(content.replace(/\r\n?/g, '\n'))
   const blocks: PlanTextBlock[] = []
@@ -68,8 +85,10 @@ export function parsePlanContent(content: string): PlanTextBlock[] {
       blocks.push({ type: 'list', text: bullet[1].trim() })
       continue
     }
-    for (const paragraph of splitLongParagraph(line)) {
-      blocks.push({ type: 'paragraph', text: paragraph })
+    for (const clause of splitAtSemicolons(line)) {
+      for (const paragraph of splitLongParagraph(clause.trim())) {
+        blocks.push({ type: 'paragraph', text: paragraph })
+      }
     }
   }
   return blocks

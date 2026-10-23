@@ -40,9 +40,11 @@ export function validateExportPayload(value: unknown): value is ExportPayload {
 }
 
 function sources(brief: DemoBrief): string[] {
-  return brief.evidenceSources.trim()
+  const files = (brief.attachments || []).map(item => `${item.name}（用户上传，尚未核验）`)
+  const legacy = brief.evidenceSources?.trim()
     ? brief.evidenceSources.split('\n').map(item => item.trim()).filter(Boolean)
-    : ['暂无；方案中的市场与用户判断仍需核验。']
+    : []
+  return [...files, ...legacy].length ? [...files, ...legacy] : ['暂无；方案中的市场与用户判断仍需核验。']
 }
 
 function label(plan: DemoPlan): string {
@@ -54,7 +56,7 @@ export async function createWordBuffer(brief: DemoBrief, plan: DemoPlan): Promis
     new Paragraph({ text: brief.projectName.trim() || '营销方案', heading: HeadingLevel.TITLE, spacing: { after: 260 } }),
     new Paragraph({ children: [new TextRun({ text: '营销策划方案', color: ACCENT, bold: true, size: 26 })], spacing: { after: 160 } }),
     new Paragraph({ children: [new TextRun({ text: label(plan), color: MUTED, size: 18 })], spacing: { after: 540 } }),
-    new Paragraph({ text: '已录入资料来源', heading: HeadingLevel.HEADING_2 }),
+    new Paragraph({ text: '项目资料', heading: HeadingLevel.HEADING_2 }),
     ...sources(brief).map(item => new Paragraph({ text: item, bullet: { level: 0 } })),
   ]
 
@@ -266,7 +268,7 @@ export async function createPresentationBuffer(brief: DemoBrief, plan: DemoPlan)
       })
     }
   }
-  addAppendix('已录入资料来源', sources(brief))
+  addAppendix('项目资料', sources(brief))
   if (plan.assumptions.length) addAppendix('待验证假设', plan.assumptions)
 
   const data = await pptx.write({ outputType: 'nodebuffer', compression: true })

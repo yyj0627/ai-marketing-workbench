@@ -14,7 +14,10 @@
     "@supabase/supabase-js": "^2.110.6",
     "docx": "^9.13.0",
     "jsonrepair": "^3.15.0",
+    "jszip": "^3.10.2",
+    "mammoth": "^1.13.0",
     "next": "latest",
+    "pdf-parse": "^2.4.5",
     "pptxgenjs": "4.0.0",
     "react": "latest",
     "react-dom": "latest"
@@ -23,7 +26,6 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "jszip": "^3.10.2",
     "typescript": "^5.9.3"
   }
 }

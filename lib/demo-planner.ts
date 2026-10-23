@@ -5,10 +5,11 @@ export type DemoBrief = {
   goal: string
   budget: string
   channels: string
-  knownFacts: string
-  evidenceSources: string
+  knownFacts?: string
+  evidenceSources?: string
   marketContext?: string
   competitors?: string
+  attachments?: Array<{ name: string; text: string; truncated: boolean }>
 }
 
 export type PlanSection = {
@@ -39,8 +40,9 @@ export const exampleBrief: DemoBrief = {
   goal: '验证午后场景的内容吸引力，并获得首批购买意向。',
   budget: '首轮测试预算 5000 元，周期 4 周。',
   channels: '小红书、社群',
-  knownFacts: '产品为低糖冷萃；支持团队拼单。其余市场与用户判断尚待验证。',
+  knownFacts: '',
   evidenceSources: '',
+  attachments: [],
   marketContext: '中国一二线城市办公室的日常午后场景；首轮为 4 周验证，不绑定节日。',
   competitors: '便利店现制咖啡、外卖咖啡及其他午后饮品是待比较的替代选择；尚未指定品牌。',
 }
@@ -76,9 +78,17 @@ export function planGroupTitle(id: string, plan?: DemoPlan) {
 export function validateBrief(value: unknown): value is DemoBrief {
   if (!value || typeof value !== 'object') return false
   const brief = value as Record<string, unknown>
-  return (['projectName', 'product', 'audience', 'goal', 'budget', 'channels', 'knownFacts', 'evidenceSources'] as const)
+  return (['projectName', 'product', 'audience', 'goal', 'budget', 'channels'] as const)
     .every(key => typeof brief[key] === 'string' && brief[key].length <= 4000)
-    && (['marketContext', 'competitors'] as const).every(key => brief[key] === undefined || (typeof brief[key] === 'string' && brief[key].length <= 4000))
+    && (['marketContext', 'competitors', 'knownFacts', 'evidenceSources'] as const).every(key => brief[key] === undefined || (typeof brief[key] === 'string' && brief[key].length <= 4000))
+    && (brief.attachments === undefined || (Array.isArray(brief.attachments) && brief.attachments.length <= 4
+      && brief.attachments.every((item: unknown) => {
+        if (!item || typeof item !== 'object') return false
+        const attachment = item as Record<string, unknown>
+        return typeof attachment.name === 'string' && attachment.name.trim().length > 0 && attachment.name.length <= 180
+          && typeof attachment.text === 'string' && attachment.text.trim().length > 0 && attachment.text.length <= 10_000
+          && typeof attachment.truncated === 'boolean'
+      })))
     && ['projectName', 'product', 'goal'].every(key => String(brief[key]).trim().length > 0)
 }
 
@@ -116,7 +126,7 @@ export function buildDemoPlan(brief: DemoBrief): DemoPlan {
       {
         id: 'swot',
         title: 'SWOT 与核心洞察',
-        content: `【S 优势】从已确认的产品能力中找可被证明的优势：${brief.knownFacts.trim() || '暂无已确认卖点'}。\n【W 劣势】检查品牌认知、渠道资源、价格与体验上的真实短板。\n【O 机会】从 PEST、消费者情境和竞品空白中筛选有证据的机会。\n【T 威胁】考虑同类替代、平台成本、效果不稳定及合规限制。\n\n【由分析到洞察】目前只能提出假设：目标人群在特定时刻可能需要一个更明确的选择理由。下一步要用访谈、评论和小规模内容测试验证，而不是直接把假设当结论。`,
+        content: `【S 优势】先从用户提供的产品描述中找可被证明的优势：${brief.product.trim()}。\n【W 劣势】检查品牌认知、渠道资源、价格与体验上的真实短板。\n【O 机会】从 PEST、消费者情境和竞品空白中筛选有证据的机会。\n【T 威胁】考虑同类替代、平台成本、效果不稳定及合规限制。\n\n【由分析到洞察】目前只能提出假设：目标人群在特定时刻可能需要一个更明确的选择理由。下一步要用访谈、评论和小规模内容测试验证，而不是直接把假设当结论。`,
       },
       {
         id: 'strategy',

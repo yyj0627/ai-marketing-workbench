@@ -8,7 +8,9 @@ import {
   FloppyDisk,
   GearSix,
   MagicWand,
+  Paperclip,
   Sparkle,
+  Trash,
   WarningCircle,
   X,
 } from '@phosphor-icons/react'
@@ -37,6 +39,7 @@ export function DemoWorkbench() {
   const [suggestion, setSuggestion] = useState('')
   const [suggestionMode, setSuggestionMode] = useState<'demo' | 'ai'>('demo')
   const [busy, setBusy] = useState<'generate' | 'revise' | null>(null)
+  const [uploading, setUploading] = useState(false)
   const [exporting, setExporting] = useState<'docx' | 'pptx' | null>(null)
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
@@ -59,7 +62,7 @@ export function DemoWorkbench() {
       if (!saved) return
       const parsed = JSON.parse(saved) as StoredDraft
       if (parsed.brief && typeof parsed.brief.projectName === 'string') {
-        setBrief({ ...exampleBrief, ...parsed.brief, evidenceSources: parsed.brief.evidenceSources || '' })
+        setBrief({ ...exampleBrief, ...parsed.brief, knownFacts: '', evidenceSources: '', attachments: parsed.brief.attachments || [] })
       }
       if (parsed.plan && Array.isArray(parsed.plan.sections)) setPlan(parsed.plan)
       setNotice('上次保存的方案已经打开。')
@@ -142,6 +145,48 @@ export function DemoWorkbench() {
     setBrief(previous => ({ ...previous, [key]: value }))
     setDirty(true)
     if (plan) setNotice('项目背景改好了。右边的旧初稿不会自动变化，你可以手动改，或重新生成。')
+  }
+
+  const uploadAttachments = async (files: FileList | null) => {
+    if (!files?.length) return
+    setError('')
+    const selectedFiles = Array.from(files)
+    const currentFiles = brief.attachments || []
+    if (currentFiles.length + selectedFiles.length > 4) {
+      setError('最多上传 4 个附件。')
+      return
+    }
+    if (selectedFiles.some(file => file.size > 32 * 1024 * 1024)) {
+      setError('单个附件不能超过 32 MB。')
+      return
+    }
+    if (new Set([...currentFiles.map(item => item.name), ...selectedFiles.map(file => file.name)]).size !== currentFiles.length + selectedFiles.length) {
+      setError('同名文件已上传。请先移除旧文件，或给新文件换个名称。')
+      return
+    }
+    setUploading(true)
+    try {
+      for (const file of selectedFiles) {
+        const data = new FormData()
+        data.append('file', file)
+        const response = await fetch('/api/attachments/extract', { method: 'POST', body: data })
+        const result = await response.json() as { attachment?: NonNullable<DemoBrief['attachments']>[number]; error?: string }
+        if (!response.ok || !result.attachment) throw new Error(`${file.name}：${result.error || '未能读取文件。'}`)
+        setBrief(previous => ({ ...previous, attachments: [...(previous.attachments || []), result.attachment!] }))
+        setDirty(true)
+      }
+      setNotice('附件文字已提取。重新生成初稿后，AI 会结合这些资料撰写。')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : '文件上传失败，请重试。')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const removeAttachment = (name: string) => {
+    setBrief(previous => ({ ...previous, attachments: (previous.attachments || []).filter(item => item.name !== name) }))
+    setDirty(true)
+    if (plan) setNotice('附件已移除。右边的旧初稿不会自动变化，请重新生成。')
   }
 
   async function requestPlan(
@@ -279,14 +324,29 @@ export function DemoWorkbench() {
             <span className="demo-step">01</span>
             <div><h2>先说说你的项目</h2><p>下面放了一个例子。按你的项目改，没把握的先留空。</p></div>
           </div>
+          <div className="demo-upload">
+            <div className="demo-upload-heading"><Paperclip size={18} /><strong>上传附件</strong><span>选填</span></div>
+            <p>有产品资料、调研或旧方案，可以先上传。AI 生成时会参考提取出的文字。</p>
+            <label className="demo-upload-button">
+              {uploading ? '正在读取附件…' : '选择文件'}
+              <input type="file" accept=".pdf,.docx,.pptx,.txt,.md" multiple disabled={uploading} onChange={event => { void uploadAttachments(event.target.files); event.target.value = '' }} />
+            </label>
+            <small>PDF、Word、PPT、TXT、Markdown；最多 4 个，单个不超过 32 MB。</small>
+            {!!brief.attachments?.length && <ul className="demo-upload-list">{brief.attachments.map(item =>
+              <li key={item.name}>
+                <div><strong>{item.name}</strong><small>已提取 {item.text.length.toLocaleString()} 字{item.truncated ? ' · 内容已截取前 1 万字' : ''}</small></div>
+                <button type="button" onClick={() => removeAttachment(item.name)} aria-label={`移除 ${item.name}`}><Trash size={16} /></button>
+              </li>,
+            )}</ul>}
+          </div>
           <div className="demo-fields">
-            <label><span>给项目起个名字 <strong>*</strong></span>
+            <label><span>项目名称 <strong>*</strong></span>
               <input value={brief.projectName} onChange={event => change('projectName', event.target.value)} />
             </label>
             <label><span>你要推广什么 <strong>*</strong></span>
               <textarea value={brief.product} onChange={event => change('product', event.target.value)} />
             </label>
-            <label>想先打动谁
+            <label>目标人群
               <textarea value={brief.audience} onChange={event => change('audience', event.target.value)} placeholder="还不确定的话，可以先留空" />
             </label>
             <label>市场、地区与营销节点
@@ -295,31 +355,25 @@ export function DemoWorkbench() {
             <label>主要竞品或替代选择
               <textarea value={brief.competitors || ''} onChange={event => change('competitors', event.target.value)} placeholder="写品牌、品类或用户现在的替代做法；不了解就留空" />
             </label>
-            <label><span>这次想达成什么 <strong>*</strong></span>
+            <label><span>目标 <strong>*</strong></span>
               <textarea value={brief.goal} onChange={event => change('goal', event.target.value)} />
             </label>
             <label>预算和时间
               <input value={brief.budget} onChange={event => change('budget', event.target.value)} placeholder="比如：5000 元，4 周" />
             </label>
-            <label>想试试哪些渠道
+            <label>渠道
               <input value={brief.channels} onChange={event => change('channels', event.target.value)} placeholder="比如：小红书、社群" />
-            </label>
-            <label>哪些信息已经确定
-              <textarea value={brief.knownFacts} onChange={event => change('knownFacts', event.target.value)} placeholder="写下已经确认的产品信息；不确定的先别当成事实" />
-            </label>
-            <label>这些信息从哪里来（选填）
-              <textarea value={brief.evidenceSources} onChange={event => change('evidenceSources', event.target.value)} placeholder="每行一条。比如：产品说明书｜团队提供" />
             </label>
           </div>
           <button
             type="button"
             className="button button--primary demo-generate"
             onClick={() => requestPlan('generate')}
-            disabled={!modelReady || Boolean(busy) || !brief.projectName.trim() || !brief.product.trim() || !brief.goal.trim()}
+            disabled={!modelReady || Boolean(busy) || uploading || !brief.projectName.trim() || !brief.product.trim() || !brief.goal.trim()}
           >
             <MagicWand size={18} />{!modelReady ? '正在连接模型…' : busy === 'generate' ? '正在撰写完整提案…' : plan ? '重新生成初稿' : '生成初稿'}<ArrowRight size={17} />
           </button>
-          <p className="demo-privacy">{busy === 'generate' && aiMode !== 'demo' ? '正在联网查找资料，并依次完成前期分析、主体创意和预算分配，请稍等。' : '点击保存后，方案只留在这个浏览器。'}{aiMode !== 'demo' ? 'AI 模式会用你的 DeepSeek Key 检索网页并生成方案；参考链接可打开核对，结论仍需你判断。' : '演示模式不会联网或调用模型。'}下载 Word 或 PPT 时，内容会由本站服务端生成文件，不会保存副本。</p>
+          <p className="demo-privacy">{busy === 'generate' && aiMode !== 'demo' ? '正在联网查找资料，并依次完成前期分析、主体创意和预算分配，请稍等。' : '点击保存后，方案和提取出的附件文字只留在这个浏览器。'}{aiMode !== 'demo' ? 'AI 模式会把项目内容和附件文字发送给 DeepSeek，并联网检索网页；请核对结论与参考链接。' : '演示模式不会联网或调用模型，也不会分析附件。'}附件原文件仅用于本次提取文字，本站不会保存副本。</p>
         </section>
 
         <section className="demo-panel demo-output">
@@ -399,10 +453,10 @@ export function DemoWorkbench() {
                 <ul>{plan.assumptions.map(item => <li key={item}>{item}</li>)}</ul>
               </div>
               <div className="demo-evidence">
-                <h3>你提供的资料来源 <span>尚未核实</span></h3>
-                {brief.evidenceSources?.trim()
-                  ? <ul>{brief.evidenceSources.trim().split('\n').filter(Boolean).map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ul>
-                  : <p>这里还没有资料来源。要引用市场或用户判断时，记得补上依据。</p>}
+                <h3>项目附件 <span>用户提供 · 尚未核实</span></h3>
+                {brief.attachments?.length
+                  ? <ul>{brief.attachments.map(item => <li key={item.name}>{item.name}</li>)}</ul>
+                  : <p>尚未上传附件。需要引用外部事实时，请核对对应章节的参考资料。</p>}
               </div>
             </>
           )}
