@@ -1,5 +1,7 @@
 # AI 营销方案工作台
 
+在线体验：[打开工作台首页](https://ai-marketing-workbench-gamma.vercel.app/)。点击“体验工作台”即可使用演示模式；AI 生成需要访客在“模型设置”中填写自己的 DeepSeek Key。
+
 ## 在自己的电脑上运行
 
 ```bash
@@ -35,7 +37,7 @@ AI_API_KEY=你的 DeepSeek API Key
 
 ## 发布为公开网页
 
-GitHub 仓库只分享源代码，不会自动提供网页。要让别人点击网址直接使用，可在 [Vercel 新建项目](https://vercel.com/new)中导入 `yyj0627/ai-marketing-workbench`，保持框架为 Next.js、根目录为仓库根目录，再点击部署。部署成功后，把 Vercel 分配的 `*.vercel.app` 地址发给别人即可；以后推送到 `main` 会触发新部署。访客从首页点击“体验工作台”进入 `/demo`，无需账号即可使用演示模式；想要 AI 生成时，在“模型设置”中填写自己的 DeepSeek Key。
+本站已部署在 Vercel，并关联这个 GitHub 仓库；推送到 `main` 会触发新部署。GitHub 仓库本身只分享源代码。如果你想部署自己的副本，可在 [Vercel 新建项目](https://vercel.com/new)中导入 `yyj0627/ai-marketing-workbench`，保持框架为 Next.js、根目录为仓库根目录，再点击部署。访客从首页点击“体验工作台”进入 `/demo`，无需账号即可使用演示模式；想要 AI 生成时，在“模型设置”中填写自己的 DeepSeek Key。
 
 公开部署不需要设置任何环境变量，尤其不要配置 `AI_API_KEY`。`/app` 下的账号和项目页是另一条流程，需要额外的 Supabase 配置；公开试用请使用 `/demo`。AI 初稿现在逐一调用十个模块，Vercel 免费 Hobby 计划的函数时长上限为 300 秒；若实际生成超过上限，接口会超时，此时需要缩短生成流程或改用支持更长请求的托管方案。
 
