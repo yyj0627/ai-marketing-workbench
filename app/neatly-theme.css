@@ -54,14 +54,14 @@ button { transition: background-color .16s ease, border-color .16s ease, color .
 .nav-actions > a.button--primary, .nav-actions > a.button--primary:hover { color:#fff; }
 .hero { max-width:1240px; padding:74px 30px 92px; grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr); gap:58px; }
 .hero-copy .kicker { color:var(--muted); font-size:12px; }
-.hero-copy h1 { max-width:11ch; font-size:clamp(42px,4.5vw,58px); line-height:1.14; font-weight:750; }
+.hero-copy h1 { max-width:none; font-size:clamp(32px,3.8vw,48px); line-height:1.14; font-weight:750; white-space:nowrap; }
 .hero-copy > p:not(.kicker) { max-width:29em; margin:24px 0 31px; font-size:16px; line-height:1.8; }
 .hero-actions { gap:10px; }
 .hero-media { aspect-ratio:16/10; border:1px solid var(--nt-line-strong); border-radius:10px; background:var(--nt-sunken); box-shadow:0 16px 40px rgb(24 30 25 / 8%); }
 .hero-media img { object-position:left top; }
 .marketing-section { max-width:1240px; padding:68px 30px 92px; border-top:1px solid var(--line); }
 .intro-grid { grid-template-columns:.8fr 1.2fr; gap:80px; }
-.intro-grid h2 { max-width:9em; font-size:clamp(30px,3.2vw,42px); line-height:1.24; }
+.intro-grid h2 { max-width:none; font-size:clamp(27px,3vw,38px); line-height:1.24; white-space:nowrap; }
 .feature-list { display:grid; grid-template-columns:1fr; gap:0; border:0; border-radius:0; background:transparent; }
 .feature-list > div, .feature-list > div:first-child { display:grid; grid-template-columns:30px minmax(0,1fr); column-gap:16px; grid-row:auto; padding:16px 0 18px; border-top:1px solid var(--line); background:transparent; }
 .feature-list svg { grid-row:span 2; margin-top:3px; color:var(--ink); }
@@ -188,7 +188,7 @@ td { color:var(--ink); }
 @media (max-width:900px) {
   .site-nav { padding-inline:20px; }
   .hero { grid-template-columns:1fr; gap:30px; padding:54px 20px 67px; }
-  .hero-copy h1 { max-width:14ch; }
+  .hero-copy h1 { font-size:clamp(34px,5.2vw,50px); }
   .hero-media { max-width:760px; }
   .marketing-section { padding:52px 20px 70px; }
   .auth-page { grid-template-columns:1fr; }
@@ -205,7 +205,8 @@ td { color:var(--ink); }
   .site-nav { gap:12px; }
   .nav-actions { gap:10px; }
   .nav-actions > a { display:none; }
-  .hero-copy h1 { font-size:39px; }
+  .hero-copy h1 { font-size:clamp(22px,8vw,39px); }
+  .intro-grid h2 { font-size:clamp(22px,7vw,32px); }
   .hero-actions { flex-wrap:wrap; }
   .hero-actions .button { flex:1 1 auto; }
   .intro-grid { grid-template-columns:1fr; }

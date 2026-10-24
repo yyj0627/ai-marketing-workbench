@@ -61,14 +61,14 @@ function Marketing({ view }: { view: View }) {
       <main className="hero">
         <div className="hero-copy">
           <p className="kicker">AI 营销方案工作台</p>
-          <h1>从营销需求，<br />到可审阅的<br />完整方案。</h1>
+          <h1>从营销需求到完整方案</h1>
           <p>整理项目背景，生成策略、渠道、执行与复盘的结构化初稿，再逐模块打磨。你可以直接体验，无需注册。</p>
           <div className="hero-actions"><Button href="/demo">体验可交互工作台</Button><Button href="/www/faq" kind="outline" icon={false}>了解工作方式</Button></div>
         </div>
         <div className="hero-media"><Image priority src="/images/product-demo-v2.png" alt="策划台工作台的方案编辑界面" fill sizes="(max-width: 900px) 100vw, 50vw" /></div>
       </main>
       <section className="marketing-section intro-grid">
-        <div><p className="kicker">让方案有结构</p><h2>从项目背景到执行复盘，方案的每一步都有迹可循。</h2></div>
+        <div><p className="kicker">让方案有结构</p><h2>方案每一步都有迹可循</h2></div>
         <div className="feature-list">{features.map(({ Icon, title, description }) => <div key={title}><Icon size={22} /><h3>{title}</h3><p>{description}</p></div>)}</div>
       </section>
     </>}
