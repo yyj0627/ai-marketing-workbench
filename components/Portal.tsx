@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -36,6 +35,31 @@ function Status({ children }: { children: string }) { return <span className={`s
 function formatDate(value: string) { return new Intl.DateTimeFormat('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value)) }
 function Button({ children, href, kind = 'primary', icon = true }: { children: React.ReactNode; href?: string; kind?: 'primary' | 'quiet' | 'outline'; icon?: boolean }) { const content = <>{children}{icon && <ArrowRight size={16} />}</>; return href ? <Link className={`button button--${kind}`} href={href}>{content}</Link> : <button className={`button button--${kind}`}>{content}</button> }
 
+function HeroPreview() {
+  return <div className="hero-media hero-preview" role="img" aria-label="填写项目资料后，得到包含前期分析、主体创意和预算分配的可编辑方案初稿">
+    <div className="hero-preview__top"><span><Sparkle size={15} weight="fill" /> 策划台</span><span>方案结构预览</span></div>
+    <div className="hero-preview__workspace">
+      <div className="hero-preview__brief">
+        <span className="hero-preview__step">01 / 项目资料</span>
+        <h3>先说清楚项目</h3>
+        <div className="hero-preview__field"><span>推广内容</span><strong>你的产品或服务</strong></div>
+        <div className="hero-preview__field"><span>目标人群</span><strong>想打动的人</strong></div>
+        <div className="hero-preview__field"><span>项目目标</span><strong>这次想达成什么</strong></div>
+        <div className="hero-preview__upload"><FileArrowUp size={14} /> 还可以补充已有资料</div>
+      </div>
+      <ArrowRight className="hero-preview__arrow" size={20} aria-hidden="true" />
+      <div className="hero-preview__plan">
+        <div className="hero-preview__plan-top"><span className="hero-preview__step">02 / 方案初稿</span><span className="hero-preview__editable">可继续修改</span></div>
+        <h3>一份完整的营销方案</h3>
+        <div className="hero-preview__module"><span>01</span><div><strong>前期分析</strong><small>市场 · 消费者 · 竞品</small></div></div>
+        <div className="hero-preview__module"><span>02</span><div><strong>主体创意</strong><small>策略 · 内容 · 渠道</small></div></div>
+        <div className="hero-preview__module"><span>03</span><div><strong>预算分配</strong><small>投入重点 · 执行安排</small></div></div>
+        <div className="hero-preview__plan-bottom"><span>逐模块打磨</span><span>导出 Word / PPT</span></div>
+      </div>
+    </div>
+  </div>
+}
+
 function Marketing({ view }: { view: View }) {
   const faqs = [
     ['资料还没准备齐，可以先开始吗？', '可以。先填项目名称、产品或服务，以及这次想达成的目标。受众、预算和渠道不确定时可以先留空，之后再补。'],
@@ -65,10 +89,10 @@ function Marketing({ view }: { view: View }) {
           <p>整理项目背景，生成策略、渠道、执行与复盘的结构化初稿，再逐模块打磨。你可以直接体验，无需注册。</p>
           <div className="hero-actions"><Button href="/demo">体验可交互工作台</Button><Button href="/www/faq" kind="outline" icon={false}>了解工作方式</Button></div>
         </div>
-        <div className="hero-media"><Image priority src="/images/product-demo-v2.png" alt="策划台工作台的方案编辑界面" fill sizes="(max-width: 900px) 100vw, 50vw" /></div>
+        <HeroPreview />
       </main>
       <section className="marketing-section intro-grid">
-        <div><p className="kicker">让方案有结构</p><h2>方案每一步都有迹可循</h2></div>
+        <div className="intro-copy"><p className="kicker">让方案有结构</p><h2>填好需求，再逐段完善方案</h2><p>写下产品和目标，补上手头已有的资料。工作台会整理出前期分析、主体创意和预算分配的初稿；你可以逐段修改，再导出 Word 或 PPT。</p><Link href="/demo">打开工作台 <ArrowRight size={17} /></Link></div>
         <div className="feature-list">{features.map(({ Icon, title, description }) => <div key={title}><Icon size={22} /><h3>{title}</h3><p>{description}</p></div>)}</div>
       </section>
     </>}
