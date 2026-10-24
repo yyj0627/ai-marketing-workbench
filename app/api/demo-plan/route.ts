@@ -27,6 +27,7 @@ import { readableSourceMarkers } from '@/lib/plan-format'
 import { buildModuleContext, modulePrompt, type PlanSectionId } from '@/lib/plan-prompts'
 
 export const runtime = 'nodejs'
+export const maxDuration = 300
 
 type ModelResponse = {
   choices?: Array<{ message?: { content?: string }; finish_reason?: string }>
